@@ -1,4 +1,6 @@
-# 📊 Portfolio Efficient Frontier, Rolling Analysis & Rebalancing Policy
+---
+title: "📊 Portfolio Efficient Frontier, Rolling Analysis & Rebalancing Policy"
+---
 
 ## 1. Overview
 
@@ -15,283 +17,299 @@ We consider four core assets:
 
 ## 2. Modern Portfolio Theory (Markowitz 1952)
 
-Given a set of assets with expected returns and covariances, a portfolio’s performance is described by two key quantities:
+Given a set of assets with expected returns and covariances, a portfolio’s performance is described by two key quantities.
 
-### **Expected Return**
+### 2.1 Expected Return
 
-\[
+The expected portfolio return is
+
+$$
 E[R_p] = \mu_p = \sum_{i=1}^{n} w_i \mu_i = \mathbf{w}^\top \boldsymbol{\mu}
-\]
+$$
 
-where  
-- \( \mathbf{w} = [w_1, w_2, \dots, w_n]^\top \) are asset weights (summing to 1)  
-- \( \boldsymbol{\mu} = [\mu_1, \mu_2, \dots, \mu_n]^\top \) are expected returns
+where
 
-### **Portfolio Variance**
+- $\mathbf{w} = [w_1, w_2, \dots, w_n]^\top$ are asset weights (summing to 1),
+- $\boldsymbol{\mu} = [\mu_1, \mu_2, \dots, \mu_n]^\top$ are expected returns.
 
-\[
+### 2.2 Portfolio Variance
+
+The portfolio variance (risk) is
+
+$$
 \sigma_p^2 = \mathbf{w}^\top \Sigma \mathbf{w}
-\]
+$$
 
-where  
-- \( \Sigma \) is the covariance matrix of asset returns.  
-- \( \sigma_p = \sqrt{\sigma_p^2} \) is the portfolio volatility.
+where
+
+- $\Sigma$ is the covariance matrix of asset returns,
+- $\sigma_p = \sqrt{\sigma_p^2}$ is the portfolio volatility.
 
 ---
 
 ## 3. Efficient Frontier
 
-The **efficient frontier** represents all portfolios that, for a given level of risk, achieve the **maximum expected return**, or equivalently, for a given return, have **minimum variance**.
+The **efficient frontier** is the set of portfolios that are **not dominated** in risk–return space: for each point on the frontier, there is no other portfolio with the **same return and lower volatility** or **same volatility and higher return**.
 
-### **Analytical Form (Unconstrained Case)**
+### 3.1 Analytical Form (Unconstrained Case)
 
-Given the moments:
+If shorting and any weights are allowed, the Markowitz problem
 
-\[
+- minimize $\mathbf{w}^\top \Sigma \mathbf{w}$
+- subject to $\mathbf{w}^\top \boldsymbol{\mu} = r$ and $\mathbf{w}^\top \mathbf{1} = 1$
+
+has a closed-form solution.
+
+Define
+
+$$
 A = \mathbf{1}^\top \Sigma^{-1} \mathbf{1}, \quad
 B = \mathbf{1}^\top \Sigma^{-1} \boldsymbol{\mu}, \quad
 C = \boldsymbol{\mu}^\top \Sigma^{-1} \boldsymbol{\mu}, \quad
-D = AC - B^2
-\]
+D = AC - B^2.
+$$
 
-The minimum-variance weights for a target return \( r \) are:
+Then, for a target return $r$, the minimum-variance weights are
 
-\[
-\mathbf{w}(r) = \Sigma^{-1} \left[ \frac{C - Br}{D} \mathbf{1} + \frac{Ar - B}{D} \boldsymbol{\mu} \right]
-\]
+$$
+\mathbf{w}(r) = \Sigma^{-1} \left[
+\frac{C - Br}{D} \mathbf{1} + \frac{Ar - B}{D} \boldsymbol{\mu}
+\right].
+$$
 
-This formula allows short-selling (weights can be negative).
+This formula **can produce negative weights**, i.e. short positions.
 
 ---
 
 ## 4. Long-Only Frontier (Practical Portfolios)
 
-Real-world portfolios are typically **long-only** (no shorts, no leverage).  
-Analytical solutions don’t apply under inequality constraints, so we use **Monte Carlo simulation**:
+Real-world portfolios are often **long-only**:
 
-1. Generate many random long-only weight vectors \( \mathbf{w} \ge 0 \) with \( \sum w_i = 1 \)
-2. Compute \( \mu_p \) and \( \sigma_p \) for each
-3. Keep the **Pareto-efficient** ones (those with no higher return for lower volatility)
+- $w_i \ge 0$ for all $i$,
+- $\sum_i w_i = 1$.
 
-This forms the **practical efficient frontier**.
+Because of these inequality constraints, the neat closed-form above no longer applies. A practical approach:
+
+1. Randomly generate many long-only weight vectors $\mathbf{w} \ge 0$ with $\sum_i w_i = 1$.
+2. For each, compute
+   $$
+   \mu_p = \mathbf{w}^\top \boldsymbol{\mu}, \qquad
+   \sigma_p = \sqrt{\mathbf{w}^\top \Sigma \mathbf{w}}.
+   $$
+3. Keep only the **Pareto-efficient** portfolios.
+
+The upper envelope of these points is the **practical (long-only) efficient frontier**.
 
 ---
 
 ## 5. Sharpe Ratio and the Tangent Portfolio
 
-The **Sharpe Ratio** measures risk-adjusted return:
+To compare portfolios with different risk levels, we use the **Sharpe ratio**:
 
-\[
+$$
 S = \frac{E[R_p] - R_f}{\sigma_p}
-\]
+$$
 
-where \( R_f \) is the risk-free rate (e.g., yield on Treasury bills).
+where $R_f$ is the **risk-free rate**.
 
-The **max-Sharpe portfolio** (tangent portfolio) is the point on the frontier that maximizes \( S \):
-- It provides the best trade-off between risk and reward.
-- In theory, a rational investor should hold some combination of this portfolio and the risk-free asset.
+- Higher $S$ = more return per unit of risk.
+- The frontier portfolio with the highest $S$ is the **tangent portfolio** (when a risk-free asset exists).
 
 ---
 
 ## 6. Rolling 10-Year Analysis
 
-To assess stability over time, we use **rolling windows** (e.g., 10 years = 120 months):
+Historical estimates of $\boldsymbol{\mu}$ and $\Sigma$ **change over time**. To see how sensitive an optimizer is, we do a **rolling-window** study.
 
-For each end-of-month \( t \):
+For each month $t$:
 
-1. Take the past 120 months of returns
-2. Compute mean returns \( \mu_t \) and covariance \( \Sigma_t \)
-3. Build a long-only efficient frontier
-4. Extract either:
-   - the **max-Sharpe** portfolio, or  
-   - the **portfolio closest to a target return** (e.g., 8%)
-5. Record weights, expected return, volatility, and Sharpe ratio.
+1. Take the past 120 months (10 years) of returns.
+2. Estimate
+   $$
+   \boldsymbol{\mu}_t = 12 \cdot \overline{r}_{t-119:t}, \qquad
+   \Sigma_t = 12 \cdot \text{Cov}_{t-119:t}.
+   $$
+3. Build a long-only frontier using $(\boldsymbol{\mu}_t, \Sigma_t)$.
+4. Either pick:
+   - the portfolio whose return is closest to a target $r^\*$, **or**
+   - the max-Sharpe portfolio for that window.
+5. Store the weights and diagnostics.
 
-This produces a **time series of “optimal” allocations** and shows how the optimizer’s recommendation drifts through market regimes.
+This gives a time series of “what the optimizer would have told me at that time.”
 
 ---
 
 ## 7. Interpreting Rolling Results
 
-| Observation | Interpretation |
-|--------------|----------------|
-| Weights are stable | The model is robust — a static allocation works |
-| Weights fluctuate wildly | Inputs are noisy — optimization is fragile |
-| Sharpe ratio changes | Regime shifts in markets (e.g., inflation, rate cycles) |
+| Observation          | Interpretation                                                    |
+|----------------------|-------------------------------------------------------------------|
+| Weights are stable   | Inputs/structure are robust → static allocation is reasonable    |
+| Weights jump around  | Optimizer is sensitive → add constraints / wider bands           |
+| Sharpe drifts        | Market regime changes (rates, vol, correlations)                 |
 
-The rolling data helps build a **policy allocation** that’s *robust* rather than “perfect”.
+The rolling data helps you build a **robust** policy allocation, not chase every month’s “optimal” weights.
 
 ---
 
 ## 8. Building a Policy Allocation
 
-From the rolling data, compute the **median weight** of each asset across all 10-year windows.
+Let the rolling exercise give you $T$ sets of optimal weights:
 
-Let \( \tilde{w}_i \) denote the median weight of asset \( i \).  
-Normalize so they sum to 1:
+$$
+\mathbf{w}^{(1)}, \mathbf{w}^{(2)}, \dots, \mathbf{w}^{(T)}.
+$$
 
-\[
-w_i^{(\text{policy})} = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}
-\]
+For asset $i$, take the median across all windows:
 
-This forms your **strategic policy portfolio** — the long-term average mix implied by decades of historical optimal portfolios.
+$$
+\tilde{w}_i = \text{median}\bigl(w_i^{(1)}, \dots, w_i^{(T)}\bigr).
+$$
+
+These medians may not sum to 1, so normalize:
+
+$$
+w_i^{(\text{policy})} = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}.
+$$
+
+This is your **policy portfolio** — the center of gravity of historical optimal allocations.
 
 ---
 
 ## 9. Defining Allocation Bands
 
-To prevent over-trading, define **bands** around each policy weight:
+To avoid over-trading, define a tolerance around each policy weight:
 
-\[
-\text{Band}_i = \left[ w_i^{(\text{policy})} - \delta, \; w_i^{(\text{policy})} + \delta \right]
-\]
+$$
+\text{Band}_i = \bigl[\, w_i^{(\text{policy})} - \delta,\; w_i^{(\text{policy})} + \delta \,\bigr]
+$$
 
-where \( \delta \) (the **band width**) is typically **±5 percentage points**.
+where $\delta$ is often **0.05** (i.e. ±5 percentage points).
 
-Example:
+**Example**
 
-| Asset | Policy | Band |
-|--------|---------|------|
-| US Stock | 40% | 35–45% |
-| Intl Stock | 20% | 15–25% |
-| US Bond | 30% | 25–35% |
-| Intl Bond | 10% | 5–15% |
+| Asset      | Policy | Band       |
+|------------|--------|------------|
+| US Stock   | 0.40   | 0.35–0.45  |
+| Intl Stock | 0.20   | 0.15–0.25  |
+| US Bond    | 0.30   | 0.25–0.35  |
+| Intl Bond  | 0.10   | 0.05–0.15  |
 
 ---
 
 ## 10. Rebalancing Strategy
 
-### **Calendar-Based**
-- Rebalance periodically (e.g., annually or semi-annually)
-- Simple but can cause unnecessary trades
+### 10.1 Calendar-Based
+- Rebalance on a fixed schedule (e.g. annually).
+- Simple, but may trade unnecessarily.
 
-### **Threshold-Based**
-- Rebalance only if a weight exits its band
-- Most cost-effective and empirically robust
+### 10.2 Threshold-Based
+- Check periodically.
+- Rebalance **only** if a weight is **outside** its band.
+- Usually more cost- and tax-efficient.
 
-### **Hybrid**
-- Check monthly, act only if outside bands
+### 10.3 Hybrid
+- Check monthly/quarterly.
+- Act only if out of band.
 
 ---
 
 ## 11. Decision Procedure
 
-1. **Compute current allocation** \( \mathbf{w}_{\text{current}} \)
-2. **Compare** to policy bands:
-   \[
-   \text{if } w_i < (w_i^{(\text{policy})} - \delta) \text{ or } w_i > (w_i^{(\text{policy})} + \delta) \Rightarrow \text{Rebalance asset } i
-   \]
-3. **Rebalance** minimally — bring only out-of-band assets back to the mid-point of their bands.
+Let $\mathbf{w}_{\text{current}}$ be your actual portfolio weights.
 
-This yields **low turnover** and **consistent risk exposure**.
+1. For each asset $i$, get $w_i^{(\text{policy})}$ and its band.
+2. If
+   $$
+   w_{i,\text{current}} < w_i^{(\text{policy})} - \delta
+   \quad \text{or} \quad
+   w_{i,\text{current}} > w_i^{(\text{policy})} + \delta,
+   $$
+   then **rebalance asset $i$**.
+3. Trade back toward the policy weight (or the midpoint of the band).
 
 ---
 
 ## 12. Interpreting Volatility
 
-The volatility number (\( \sigma_p \)) is the annualized standard deviation of returns.  
-If expected return \( \mu_p = 8\% \) and \( \sigma_p = 7\% \):
+If a portfolio has $\mu_p = 8\%$ and $\sigma_p = 7\%$, then (roughly, assuming normality):
 
-- About 68% of years fall within \( 8\% \pm 7\% \) → range **1% to 15%**
-- About 95% within \( 8\% \pm 14\% \) → range **–6% to 22%**
+- About 68% of years fall in
+  $$
+  8\% \pm 7\% \quad \Rightarrow \quad 1\% \text{ to } 15\%
+  $$
+- About 95% of years fall in
+  $$
+  8\% \pm 14\% \quad \Rightarrow \quad -6\% \text{ to } 22\%
+  $$
 
-It measures *uncertainty*, not just downside risk.
+Volatility = typical fluctuation around the mean, not guaranteed bounds.
 
 ---
 
 ## 13. Risk-Free Rate
 
-Used in Sharpe ratio computations, \( R_f \) typically represents the yield on U.S. Treasury bills (e.g., 4%).  
-It defines the baseline return for a riskless asset.
+Used in Sharpe:
 
-Typical values:
-
-| Source | Example (2025) | Rate |
-|--------|----------------|------|
-| 3-month T-bill | Short-term cash proxy | 4.5% |
-| 10-year Treasury | Long-term benchmark | 4.0% |
-| Academic default | Fixed constant | 2–4% |
+- $R_f$ is usually a Treasury yield (3m T-bill, 1y, etc.).
+- Higher $R_f$ makes it harder for risky portfolios to look good on a Sharpe basis.
 
 ---
 
 ## 14. Handling Median Normalization
 
-When medians per asset don’t sum to 100%, normalize:
+If
+$$
+\sum_i \tilde{w}_i \neq 1,
+$$
+then normalize:
 
-\[
-w_i^{(\text{normalized})} = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}
-\]
+$$
+w_i^{(\text{normalized})} = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}.
+$$
 
-This preserves full investment and yields consistent bands and policy weights.
+Now weights sum to 1 and you can define bands.
 
 ---
 
 ## 15. Summary: From Math to Action
 
-| Step | Concept | Output |
-|------|----------|---------|
-| 1 | Collect price history | Monthly returns |
-| 2 | Compute \( \mu, \Sigma \) | Expected returns & covariances |
-| 3 | Build efficient frontiers | Trade-off between risk & return |
-| 4 | Perform rolling analysis | Historical sensitivity |
-| 5 | Extract median allocation | Long-term policy weights |
-| 6 | Define bands ±δ | Drift tolerance |
-| 7 | Compare to current allocation | Rebalance signals |
-| 8 | Maintain discipline | Stable, low-turnover portfolio |
+| Step | Concept                      | Output                       |
+|------|------------------------------|------------------------------|
+| 1    | Get prices, make returns     | Monthly return series        |
+| 2    | Estimate $\mu$, $\Sigma$     | Inputs for optimization      |
+| 3    | Build frontiers              | Risk–return trade-off        |
+| 4    | Rolling 10y analysis         | Stability over time          |
+| 5    | Take medians, normalize      | Policy allocation            |
+| 6    | Add bands                    | Rebalancing tolerance        |
+| 7    | Compare to current weights   | Rebalance signals            |
 
 ---
 
-## 16. Implementation Notes
+## 16. Example Interpretation
 
-- Use **monthly total-return indices** for accuracy.
-- Minimum 10 years of history per window improves stability.
-- Longer lookbacks smooth noise but adapt slower to regime shifts.
-- Rebalancing frequency and band width can be tuned for transaction costs.
+If rolling results over 30 years suggest:
 
----
+| Asset      | Median | 25–75% Range |
+|------------|--------|--------------|
+| US Stock   | 41%    | 35–48%       |
+| Intl Stock | 18%    | 14–23%       |
+| US Bond    | 31%    | 27–36%       |
+| Intl Bond  | 10%    | 6–13%        |
 
-## 17. Example Interpretation
-
-If over 30 years the rolling analysis suggests:
-
-| Asset | Median | 25–75% Range |
-|--------|---------|--------------|
-| US Stock | 41% | 35–48% |
-| Intl Stock | 18% | 14–23% |
-| US Bond | 31% | 27–36% |
-| Intl Bond | 10% | 6–13% |
-
-Then a policy allocation of **40/20/30/10** with **±5% bands** is a realistic long-term mix.
-
-If your current allocation deviates (e.g., 50/10/30/10), you’re overweight U.S. stocks and underweight international equities → *rebalance gradually toward policy*.
+then a policy of **40/20/30/10** with **±5%** bands is a sensible, data-backed long-term mix.
 
 ---
 
-## 18. Key Principles
+## 17. Key Principles
 
-1. **Optimization is fragile**; rely on stable inputs and medians.  
-2. **Diversification, not precision**, drives real-world success.  
-3. **Rebalancing discipline** matters more than exact weights.  
-4. **Use the model as a compass, not a GPS.**
-
----
-
-## 19. Recommended Parameters
-
-| Parameter | Symbol | Typical Value | Notes |
-|------------|---------|----------------|-------|
-| Risk-free rate | \( R_f \) | 0.03–0.04 | For Sharpe ratio |
-| Band width | \( \delta \) | ±5 pp | Rebalancing tolerance |
-| Lookback window | — | 10 years | Rolling analysis |
-| Target return | \( r^* \) | 0.06–0.08 | Annualized |
-| Portfolios per sim | — | 4,000–20,000 | For MC frontiers |
+1. **Optimization is fragile** — don’t chase tiny differences.
+2. **Diversification is robust** — own multiple assets.
+3. **Discipline beats precision** — policy + bands > re-optimize monthly.
+4. **Use models as maps, not oracles.**
 
 ---
 
-## 20. References
+## 18. References
 
-- Markowitz, H. (1952). *Portfolio Selection*. Journal of Finance.  
-- Sharpe, W.F. (1966). *Mutual Fund Performance*. Journal of Business.  
-
----
-
+- Markowitz, H. (1952). *Portfolio Selection*. **Journal of Finance**.  
+- Sharpe, W. F. (1966). *Mutual Fund Performance*. **Journal of Business**.  
