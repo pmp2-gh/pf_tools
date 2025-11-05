@@ -1,0 +1,71 @@
+# ============================================
+# Python build / runtime files
+# ============================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ============================================
+# Virtual environments
+# ============================================
+.venv/
+venv/
+env/
+ENV/
+workspace/venvs/
+.ipynb_checkpoints/
+
+# ============================================
+# IDE / editor metadata
+# ============================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Logs, cache, temp
+# ============================================
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+.cache/
+.pytest_cache/
+coverage.*
+htmlcov/
+
+# ============================================
+# Jupyter / Notebooks
+# ============================================
+.ipynb_checkpoints/
+*.ipynb~
+
+# ============================================
+# Data and output folders
+# ============================================
+data/
+results/
+plots/
+downloads/
+*.csv
+*.xlsx
+*.hdf5
+*.pkl
+*.zip
+
+# ============================================
+# OS-specific
+# ============================================
+*.swp
+*.swo
+*.orig
+*~
