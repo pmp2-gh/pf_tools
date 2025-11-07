@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Strategic Portfolio Allocator</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Strategic Portfolio Allocator</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#setup-and-asset-universe"
+id="toc-setup-and-asset-universe">1. Setup and Asset Universe</a></li>
+<li><a href="#modern-portfolio-theory-markowitz-1952"
+id="toc-modern-portfolio-theory-markowitz-1952">2. Modern Portfolio
+Theory (Markowitz 1952)</a>
+<ul>
+<li><a href="#expected-portfolio-return"
+id="toc-expected-portfolio-return">2.1 Expected Portfolio
+Return</a></li>
+<li><a href="#portfolio-variance-volatility"
+id="toc-portfolio-variance-volatility">2.2 Portfolio Variance /
+Volatility</a></li>
+</ul></li>
+<li><a href="#analytical-efficient-frontier-unconstrained"
+id="toc-analytical-efficient-frontier-unconstrained">3. Analytical
+Efficient Frontier (Unconstrained)</a></li>
+<li><a href="#long-only-frontier-practical-case"
+id="toc-long-only-frontier-practical-case">4. Long-Only Frontier
+(Practical Case)</a></li>
+<li><a href="#sharpe-ratio" id="toc-sharpe-ratio">5. Sharpe
+Ratio</a></li>
+<li><a href="#rolling-10-year-optimization"
+id="toc-rolling-10-year-optimization">6. Rolling 10-Year
+Optimization</a></li>
+<li><a href="#shrinkage-to-avoid-overfitting"
+id="toc-shrinkage-to-avoid-overfitting">7. Shrinkage (to Avoid
+Overfitting)</a></li>
+<li><a href="#from-rolling-weights-to-a-policy-portfolio"
+id="toc-from-rolling-weights-to-a-policy-portfolio">8. From Rolling
+Weights to a Policy Portfolio</a></li>
+<li><a href="#quantile-based-rebalancing-bands"
+id="toc-quantile-based-rebalancing-bands">9. Quantile-Based Rebalancing
+Bands</a></li>
+<li><a href="#investor-profiles" id="toc-investor-profiles">10. Investor
+Profiles</a></li>
+<li><a href="#profiles-in-practice" id="toc-profiles-in-practice">11.
+Profiles in Practice</a></li>
+<li><a href="#stress-tests-for-black-swan-ish-events"
+id="toc-stress-tests-for-black-swan-ish-events">12. Stress Tests (for
+Black-Swan-ish Events)</a></li>
+<li><a href="#picking-the-mode" id="toc-picking-the-mode">13. Picking
+the Mode</a></li>
+<li><a href="#age-based-cheat-sheet" id="toc-age-based-cheat-sheet">14.
+Age-Based Cheat Sheet</a></li>
+<li><a href="#volatility-intuition" id="toc-volatility-intuition">15.
+Volatility Intuition</a></li>
+<li><a href="#recap" id="toc-recap">17. Recap</a></li>
+</ul>
+</nav>
+<p>This document explains the theory and practice behind the portfolio
+script. It covers:</p>
+<ul>
+<li>Modern Portfolio Theory (MPT)</li>
+<li>Long-only, Monte Carlo efficient frontiers</li>
+<li>Rolling 10-year optimization</li>
+<li>Policy portfolio from rolling medians</li>
+<li>Quantile-based rebalancing bands</li>
+<li>Investor profiles (so it works for 25-year-olds and people 10 years
+from retirement)</li>
+<li>Simple stress tests for “what if 2008/2022 happens again”</li>
+</ul>
+<hr />
+<h2 id="setup-and-asset-universe">1. Setup and Asset Universe</h2>
+<p>We assume a small, sensible universe (adjustable in the script):</p>
+<ul>
+<li>U.S. stocks</li>
+<li>(optional) international stocks</li>
+<li>U.S. bonds</li>
+<li>(optional) international/synthetic bonds</li>
+</ul>
+<p>The script pulls prices (e.g. via <code>yfinance</code>), builds
+<strong>monthly</strong> returns, and annualizes when constructing the
+frontier.</p>
+<hr />
+<h2 id="modern-portfolio-theory-markowitz-1952">2. Modern Portfolio
+Theory (Markowitz 1952)</h2>
+<p>Let there be <span class="math inline">\(n\)</span> assets with
+expected returns <span class="math inline">\(\boldsymbol{\mu} \in
+\mathbb{R}^n\)</span> and covariance matrix <span
+class="math inline">\(\Sigma \in \mathbb{R}^{n \times n}\)</span>, and
+portfolio weights <span class="math inline">\(\mathbf{w} \in
+\mathbb{R}^n\)</span> such that</p>
+<p><span class="math display">\[
+\sum_{i=1}^n w_i = 1.
+\]</span></p>
+<h3 id="expected-portfolio-return">2.1 Expected Portfolio Return</h3>
+<p><span class="math display">\[
+E[R_p] = \mu_p = \mathbf{w}^\top \boldsymbol{\mu}.
+\]</span></p>
+<h3 id="portfolio-variance-volatility">2.2 Portfolio Variance /
+Volatility</h3>
+<p><span class="math display">\[
+\sigma_p^2 = \mathbf{w}^\top \Sigma \mathbf{w}, \qquad
+\sigma_p = \sqrt{\mathbf{w}^\top \Sigma \mathbf{w}}.
+\]</span></p>
+<p>This is the basic MPT core the script uses after it computes monthly
+returns.</p>
+<hr />
+<h2 id="analytical-efficient-frontier-unconstrained">3. Analytical
+Efficient Frontier (Unconstrained)</h2>
+<p>If we allow any weights (even negative, i.e. shorting), the Markowitz
+problem has a closed form.</p>
+<p>Define</p>
+<p><span class="math display">\[
+A = \mathbf{1}^\top \Sigma^{-1} \mathbf{1}, \quad
+B = \mathbf{1}^\top \Sigma^{-1} \boldsymbol{\mu}, \quad
+C = \boldsymbol{\mu}^\top \Sigma^{-1} \boldsymbol{\mu}, \quad
+D = AC - B^2.
+\]</span></p>
+<p>For a target return <span class="math inline">\(r\)</span>, the
+minimum-variance weights are</p>
+<p><span class="math display">\[
+\mathbf{w}(r) = \Sigma^{-1}
+\left(
+\frac{C - Br}{D} \mathbf{1}
++
+\frac{Ar - B}{D} \boldsymbol{\mu}
+\right).
+\]</span></p>
+<p>This is what the script calls the “unconstrained frontier” for
+plotting — useful for intuition, but not what we actually implement for
+live portfolios.</p>
+<hr />
+<h2 id="long-only-frontier-practical-case">4. Long-Only Frontier
+(Practical Case)</h2>
+<p>Real portfolios are usually</p>
+<p><span class="math display">\[
+w_i \ge 0 \quad \text{for all } i, \qquad \sum_i w_i = 1.
+\]</span></p>
+<p>This makes the problem nonlinear, so the script does the practical
+thing:</p>
+<ol type="1">
+<li>Generate many random long-only portfolios.</li>
+<li>Annualize their returns and volatilities: <span
+class="math display">\[
+\mu_p = \mathbf{w}^\top \boldsymbol{\mu}, \quad
+\sigma_p = \sqrt{\mathbf{w}^\top \Sigma \mathbf{w}}.
+\]</span></li>
+<li>Sort by volatility and keep only those that are not dominated
+(Pareto-efficient).</li>
+</ol>
+<p>This is the “long-only frontier” the script compares to the
+analytical one.</p>
+<hr />
+<h2 id="sharpe-ratio">5. Sharpe Ratio</h2>
+<p>To compare portfolios with different risk levels, we use the Sharpe
+ratio</p>
+<p><span class="math display">\[
+S = \frac{E[R_p] - R_f}{\sigma_p},
+\]</span></p>
+<p>where <span class="math inline">\(R_f\)</span> is the (annual)
+risk-free rate.</p>
+<p>The script’s <code>ROLLING_MODE = "max_sharpe"</code> simply picks,
+for that month’s frontier, the portfolio with the highest <span
+class="math inline">\(S\)</span>.</p>
+<hr />
+<h2 id="rolling-10-year-optimization">6. Rolling 10-Year
+Optimization</h2>
+<p>Markets change, so the script does this every month:</p>
+<ol type="1">
+<li>Take the last 120 months of returns (a 10-year window).</li>
+<li>Estimate annualized mean and covariance: <span
+class="math display">\[
+\boldsymbol{\mu}_t = 12 \cdot \overline{\mathbf{r}}_{t-119:t},
+\qquad
+\Sigma_t = 12 \cdot \mathrm{Cov}(\mathbf{r}_{t-119:t}).
+\]</span></li>
+<li>Build a long-only frontier from those data.</li>
+<li>Pick <strong>one</strong> portfolio from that frontier using a rule:
+<ul>
+<li>target return</li>
+<li>target volatility</li>
+<li>max Sharpe</li>
+</ul></li>
+<li>Store the weights for date <span
+class="math inline">\(t\)</span>.</li>
+</ol>
+<p>Do this for every month → you get a time series of “optimal” weights,
+one per month.</p>
+<hr />
+<h2 id="shrinkage-to-avoid-overfitting">7. Shrinkage (to Avoid
+Overfitting)</h2>
+<p>Historical returns are noisy, so the script blends the sample
+estimates with forward-looking assumptions:</p>
+<p>Mean shrinkage:</p>
+<p><span class="math display">\[
+\hat{\boldsymbol{\mu}}_t
+= (1 - \alpha)\, \boldsymbol{\mu}_{t,\text{sample}}
++ \alpha \, \boldsymbol{\mu}_{\text{long-run}}.
+\]</span></p>
+<p>Covariance shrinkage:</p>
+<p><span class="math display">\[
+\hat{\Sigma}_t
+= (1 - \beta)\, \Sigma_{t,\text{sample}}
++ \beta \, \mathrm{diag}(\Sigma_{t,\text{sample}}).
+\]</span></p>
+<p>Typical settings in the script are <span class="math inline">\(\alpha
+\approx 0.5\)</span>, <span class="math inline">\(\beta \approx
+0.1\)</span> — i.e. “trust history, but not blindly.”</p>
+<hr />
+<h2 id="from-rolling-weights-to-a-policy-portfolio">8. From Rolling
+Weights to a Policy Portfolio</h2>
+<p>Suppose you end up with <span class="math inline">\(T\)</span> months
+of rolling allocations:</p>
+<p><span class="math display">\[
+\mathbf{w}^{(1)}, \mathbf{w}^{(2)}, \dots, \mathbf{w}^{(T)}.
+\]</span></p>
+<p>For each asset <span class="math inline">\(i\)</span>, take the
+<strong>median</strong> over time:</p>
+<p><span class="math display">\[
+\tilde{w}_i = \mathrm{median} \big( w_i^{(1)}, w_i^{(2)}, \dots,
+w_i^{(T)} \big).
+\]</span></p>
+<p>Then normalize:</p>
+<p><span class="math display">\[
+w_i^{(\text{policy})}
+= \frac{\tilde{w}_i}{\sum_{j} \tilde{w}_j}.
+\]</span></p>
+<p>That gives you a <strong>stable, data-backed, long-term mix</strong>
+— not “whatever the optimizer liked last month.”</p>
+<hr />
+<h2 id="quantile-based-rebalancing-bands">9. Quantile-Based Rebalancing
+Bands</h2>
+<p>To avoid over-trading, we use the actual distribution of rolling
+weights.</p>
+<p>For asset <span class="math inline">\(i\)</span>:</p>
+<ul>
+<li>Let <span class="math inline">\(q_{\ell,i}\)</span> be the low
+quantile (e.g. 0.30).</li>
+<li>Let <span class="math inline">\(q_{h,i}\)</span> be the high
+quantile (e.g. 0.70).</li>
+</ul>
+<p>Define the band as</p>
+<p><span class="math display">\[
+\mathrm{Band}_i =
+\big[ \max(q_{\ell,i}, w_i^{(\text{policy})} - \delta),
+      \min(q_{h,i}, w_i^{(\text{policy})} + \delta) \big],
+\]</span></p>
+<p>where <span class="math inline">\(\delta\)</span> is a fixed cap
+(e.g. 5 percentage points).</p>
+<p>If your <strong>current</strong> weight is outside that band →
+rebalance. If not → do nothing.</p>
+<hr />
+<h2 id="investor-profiles">10. Investor Profiles</h2>
+<p>The script now has a layer that runs <strong>after</strong>
+optimization and simply says:</p>
+<ul>
+<li>if you’re young → it’s OK to let the optimizer choose low bonds</li>
+<li>if you’re 10 years from retirement → you must have at least, say,
+35% in bonds</li>
+<li>if you’re retired → you must have at least, say, 60% in bonds</li>
+</ul>
+<p>Formally, for a given month’s optimized weights <span
+class="math inline">\(\mathbf{w}\)</span> and a chosen profile with
+minimum safety <span class="math inline">\(s_{\min}\)</span>:</p>
+<ol type="1">
+<li>Let <span class="math inline">\(\mathcal{S}\)</span> be the set of
+“safety” assets (bonds).<br />
+</li>
+<li>Compute current safety share: <span class="math display">\[
+s = \sum_{k \in \mathcal{S}} w_k.
+\]</span></li>
+<li>If <span class="math inline">\(s \ge s_{\min}\)</span>, keep <span
+class="math inline">\(\mathbf{w}\)</span>.</li>
+<li>If <span class="math inline">\(s &lt; s_{\min}\)</span>, scale down
+all non-safety assets proportionally and set safety to <span
+class="math inline">\(s_{\min}\)</span>, then renormalize to 1.</li>
+</ol>
+<p>This is how we <strong>add</strong> close-to-retirement usefulness
+without <strong>removing</strong> usefulness for everyone else.</p>
+<hr />
+<h2 id="profiles-in-practice">11. Profiles in Practice</h2>
+<p>You can think of the built-in profiles like this:</p>
+<ul>
+<li>accumulator: <span class="math inline">\(s_{\min} = 0\)</span></li>
+<li>balanced: <span class="math inline">\(s_{\min} \approx
+0.20\)</span></li>
+<li>pre_retirement: <span class="math inline">\(s_{\min} \approx
+0.35\)</span></li>
+<li>in_retirement: <span class="math inline">\(s_{\min} \approx
+0.60\)</span></li>
+</ul>
+<p>So if the rolling optimizer says “95% stocks!” but your profile is
+<code>pre_retirement</code>, the script will clamp it to at least 35%
+bonds and scale the rest.</p>
+<hr />
+<h2 id="stress-tests-for-black-swan-ish-events">12. Stress Tests (for
+Black-Swan-ish Events)</h2>
+<p>Mean–variance doesn’t see tails, so the script can apply simple
+one-period shocks like:</p>
+<ul>
+<li>stocks: <span class="math inline">\(-40\%\)</span>, bonds: <span
+class="math inline">\(0\%\)</span></li>
+<li>stocks: <span class="math inline">\(-35\%\)</span>, bonds: <span
+class="math inline">\(-10\%\)</span></li>
+<li>stocks: <span class="math inline">\(-15\%\)</span>, bonds: <span
+class="math inline">\(-5\%\)</span></li>
+</ul>
+<p>Given policy weights <span
+class="math inline">\(w_{\text{stock}}\)</span> and <span
+class="math inline">\(w_{\text{bond}}\)</span>, the shocked portfolio
+loss is</p>
+<p><span class="math display">\[
+\Delta P \approx
+w_{\text{stock}} \cdot s_{\text{shock}}
++ w_{\text{bond}} \cdot b_{\text{shock}}.
+\]</span></p>
+<p>If you’re close to retirement and this number is worse than, say,
+<span class="math inline">\(-25\%\)</span>, you raise <span
+class="math inline">\(s_{\min}\)</span> in your profile and run
+again.</p>
+<hr />
+<h2 id="picking-the-mode">13. Picking the Mode</h2>
+<p>You have three legit choices in the script:</p>
+<ol type="1">
+<li><p><strong>Max Sharpe</strong>
+(<code>ROLLING_MODE = "max_sharpe"</code>) <span class="math display">\[
+\text{pick } \mathbf{w} \text{ such that } S(\mathbf{w}) \text{ is
+maximal.}
+\]</span> Best for younger / growthy users.</p></li>
+<li><p><strong>Target Vol</strong>
+(<code>ROLLING_MODE = "target_vol"</code>) <span class="math display">\[
+\text{pick } \mathbf{w} \text{ such that }
+\sigma(\mathbf{w}) \approx \sigma^\*.
+\]</span> Best for people 10 years from retirement — you set <span
+class="math inline">\(\sigma^\*\)</span> (e.g. <span
+class="math inline">\(0.08\)</span>) to match “how much drop can I sleep
+through?”</p></li>
+<li><p><strong>Target Return</strong>
+(<code>ROLLING_MODE = "target_return"</code>) <span
+class="math display">\[
+\text{pick } \mathbf{w} \text{ such that }
+\mu(\mathbf{w}) \approx r^\*.
+\]</span> Useful if you know you need, say, 6–7% to make the plan
+work.</p></li>
+</ol>
+<p>All 3 still go through the profile clamp afterward.</p>
+<hr />
+<h2 id="age-based-cheat-sheet">14. Age-Based Cheat Sheet</h2>
+<ul>
+<li>20s–30s → profile = accumulator, mode = max Sharpe</li>
+<li>late 30s–40s → profile = balanced, mode = max Sharpe or target
+vol</li>
+<li>50s–mid 60s → profile = pre_retirement, mode = target vol
+(e.g. 8%)</li>
+<li>retired → profile = in_retirement, mode = target vol (e.g. 6%),
+maybe even tighter bands</li>
+</ul>
+<p><strong>Keep</strong> the cool rolling/MPT stuff,
+<strong>add</strong> a layer so near-retirees don’t get wrecked.</p>
+<hr />
+<h2 id="volatility-intuition">15. Volatility Intuition</h2>
+<p>If a portfolio has volatility <span
+class="math inline">\(\sigma_p\)</span>, a decent first-order way to
+talk about “bad years” is</p>
+<p><span class="math display">\[
+\text{bad year} \approx 2 \sigma_p.
+\]</span></p>
+<p>So if <span class="math inline">\(\sigma_p = 0.08\)</span> (8%), plan
+for a possible <span class="math inline">\(-16\%\)</span> year.<br />
+If that’s too much for a near-retiree → lower the target vol or raise
+the safety floor.</p>
+<hr />
+<h2 id="recap">17. Recap</h2>
+<ol type="1">
+<li>MPT gives us <span class="math inline">\((\mu, \sigma)\)</span>
+math.<br />
+</li>
+<li>Long-only frontier makes it realistic.<br />
+</li>
+<li>Rolling windows make it regime-aware.<br />
+</li>
+<li>Medians make it stable.<br />
+</li>
+<li>Quantile bands make it trade sensibly.<br />
+</li>
+<li>Profiles make it useful to <em>everyone</em>, not just young
+accumulators.<br />
+</li>
+<li>Stress tests keep us honest about tail risk.</li>
+</ol>
+</body>
+</html>
