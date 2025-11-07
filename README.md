@@ -1,1 +1,2 @@
-Calculators and exploratory code for personal finance topics
+Personal Finance tools for modeling and decision making
+
